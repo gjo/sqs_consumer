@@ -2,6 +2,7 @@
 
 from __future__ import unicode_literals
 import logging
+import signal
 import botocore.session
 from pyramid.settings import asbool
 
@@ -42,6 +43,9 @@ class Worker(object):
         self.stop = False
 
     def prepare(self):
+        signal.signal(signal.SIGINT, self.handle_stop)
+        signal.signal(signal.SIGQUIT, self.handle_stop)
+        signal.signal(signal.SIGTERM, self.handle_stop)
         params = dict()
         if self.profile is not marker:
             params['profile'] = self.profile
@@ -63,6 +67,10 @@ class Worker(object):
         self.session = botocore.session.get_session(params)
         self.client = self.session.create_client('sqs')
         self.queue_url = self.get_queue_url()
+
+    def handle_stop(self, sig, frame):
+        self.logger.info('Received signal %r', sig)
+        self.stop = True
 
     def serve_forever(self):
         self.prepare()
