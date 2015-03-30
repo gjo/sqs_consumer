@@ -13,28 +13,28 @@ marker = object()
 
 class Worker(object):
 
-    app = None  #: callable
-    queue_name = None  #: str
-    protocol_dump = None  #: bool
+    app = None  # :type: callable
+    queue_name = None  # :type: str
+    protocol_dump = None  # :type: bool
 
-    max_number_of_messages = marker  #: int
-    visibility_timeout = marker  #: int
-    wait_time_seconds = marker  #: int
+    max_number_of_messages = marker  # :type: int
+    visibility_timeout = marker  # :type: int
+    wait_time_seconds = marker  # :type: int
 
-    profile = marker  #: str
-    credentials_file = marker  #: str
-    config_file = marker  #: str
-    metadata_service_num_attempts = marker  #: int
-    provider = marker  #: str
-    region = marker  #: str
-    data_path = marker  #: str
-    metadata_service_timeout = marker  #: int
+    profile = marker  # :type: str
+    credentials_file = marker  # :type: str
+    config_file = marker  # :type: str
+    metadata_service_num_attempts = marker  # :type: int
+    provider = marker  # :type: str
+    region = marker  # :type: str
+    data_path = marker  # :type: str
+    metadata_service_timeout = marker  # :type: int
 
-    client = None  #: botocore.client.sqs
+    client = None  # :type: botocore.client.sqs
     logger = logger
-    stop = None  #: bool
-    queue_url = None  #: str
-    session = None  #: botocore.session.Session
+    stop = None  # :type: bool
+    queue_url = None  # :type: str
+    session = None  # :type: botocore.session.Session
 
     def __init__(self, **kwargs):
         for k in kwargs:
@@ -138,6 +138,12 @@ class Worker(object):
 
 
 def run_pserve(app, global_config, **settings):
+    """
+    :param app: callable
+    :param global_config: dict
+    :param settings: dict
+    :return: int
+    """
     params = {
         'app': app,
         'queue_name': settings['queue_name'],
