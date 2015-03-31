@@ -24,7 +24,7 @@ requires = (
 
 setup(
     name='sqs_consumer',
-    version='0.1.dev0',
+    version='0.1',
     description=description,
     long_description=long_description,
     author='OCHIAI, Gouji',
@@ -39,9 +39,9 @@ setup(
     classifiers=[
         'License :: OSI Approved :: BSD License',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.4',
-    ], entry_points="""\
+    ],
+    entry_points="""\
     [paste.app_factory]
     example = sqs_consumer.tests.example:main
     [paste.server_runner]
