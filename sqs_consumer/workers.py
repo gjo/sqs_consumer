@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import logging
 import signal
 import botocore.session
+from botocore_paste import session_from_config
 from pyramid.settings import asbool
 
 
@@ -13,58 +14,29 @@ marker = object()
 
 class Worker(object):
 
-    app = None  # :type: callable
-    queue_name = None  # :type: str
-    protocol_dump = None  # :type: bool
-
-    max_number_of_messages = marker  # :type: int
-    visibility_timeout = marker  # :type: int
-    wait_time_seconds = marker  # :type: int
-
-    profile = marker  # :type: str
-    credentials_file = marker  # :type: str
-    config_file = marker  # :type: str
-    metadata_service_num_attempts = marker  # :type: int
-    provider = marker  # :type: str
-    region = marker  # :type: str
-    data_path = marker  # :type: str
-    metadata_service_timeout = marker  # :type: int
-
     client = None  # :type: botocore.client.sqs
-    logger = logger
-    stop = None  # :type: bool
     queue_url = None  # :type: str
-    session = None  # :type: botocore.session.Session
 
-    def __init__(self, **kwargs):
-        for k in kwargs:
-            if hasattr(self, k):
-                setattr(self, k, kwargs[k])
+    logger = logger
+    stop = False
+
+    def __init__(self, app, queue_name, session=None, receive_params=None,
+                 protocol_dump=False):
+        self.app = app
+        self.queue_name = queue_name
+        if session is None:
+            session = botocore.session.get_session()
+        self.session = session
+        if receive_params is None:
+            receive_params = {}
+        self.receive_params = receive_params
+        self.protocol_dump = protocol_dump
         self.stop = False
 
     def prepare(self):
         signal.signal(signal.SIGINT, self.handle_stop)
         signal.signal(signal.SIGQUIT, self.handle_stop)
         signal.signal(signal.SIGTERM, self.handle_stop)
-        params = dict()
-        if self.profile is not marker:
-            params['profile'] = self.profile
-        if self.credentials_file is not marker:
-            params['credentials_file'] = self.credentials_file
-        if self.config_file is not marker:
-            params['config_file'] = self.config_file
-        if self.metadata_service_num_attempts is not marker:
-            params['metadata_service_num_attempts'] = \
-                self.metadata_service_num_attempts
-        if self.provider is not marker:
-            params['provider'] = self.provider
-        if self.region is not marker:
-            params['region'] = self.region
-        if self.data_path is not marker:
-            params['data_path'] = self.data_path
-        if self.metadata_service_timeout is not marker:
-            params['metadata_service_timeout'] = self.metadata_service_timeout
-        self.session = botocore.session.get_session(params)
         self.client = self.session.create_client('sqs')
         self.queue_url = self.get_queue_url()
 
@@ -84,18 +56,7 @@ class Worker(object):
         if 'Messages' in recv_ret:
             self.logger.debug('Polled: %d messages', len(recv_ret['Messages']))
             for message in recv_ret['Messages']:
-                message_id = message['MessageId']
-                self.logger.info('Process Message: %s', message_id)
-                body = message['Body']
-                self.logger.debug('Message Body: %r', body)
-                app_ret = None
-                try:
-                    app_ret = self.app(body)
-                except:
-                    self.logger.exception('Consumer Halted')
-                if app_ret:
-                    self.logger.info('Delete Message: %s', message_id)
-                    self.delete_message(message)
+                self.run_app(message)
         else:
             # self.logger.debug('Polled: no messages')
             pass
@@ -111,14 +72,7 @@ class Worker(object):
 
     def receive_messages(self):
         params = dict(QueueUrl=self.queue_url)
-        if self.max_number_of_messages is not marker:
-            params['MaxNumberOfMessages'] = self.max_number_of_messages
-        if self.visibility_timeout is not marker:
-            params['VisibilityTimeout'] = self.visibility_timeout
-        if self.wait_time_seconds is not marker:
-            params['WaitTimeSeconds'] = self.wait_time_seconds
-        # AttributeNames=[],
-        # MessageAttributeNames=[],
+        params.update(self.receive_params)
         if self.protocol_dump:
             self.logger.debug('[PROTO] ReceiveMessage Call: %r', params)
         ret = self.client.receive_message(**params)
@@ -136,6 +90,20 @@ class Worker(object):
             self.logger.debug('[PROTO] DeleteMessage Return: %r', ret)
         return ret
 
+    def run_app(self, message):
+        message_id = message['MessageId']
+        self.logger.info('Process Message: %s', message_id)
+        body = message['Body']
+        self.logger.debug('Message Body: %r', body)
+        ret = None
+        try:
+            ret = self.app(body)
+        except:
+            self.logger.exception('Consumer Halted')
+        if ret:
+            self.logger.info('Delete Message: %s', message_id)
+            self.delete_message(message)
+
 
 def run_pserve(app, global_config, **settings):
     """
@@ -148,16 +116,16 @@ def run_pserve(app, global_config, **settings):
         'app': app,
         'queue_name': settings['queue_name'],
         'protocol_dump': asbool(settings.get('protocol_dump')),
+        'session': session_from_config(settings, 'botocore.')
     }
-    for k in ('max_number_of_messages', 'visibility_timeout',
-              'wait_time_seconds', 'metadata_service_num_attempts',
-              'metadata_service_timeout'):
+    receive_params = {}
+    for k, kk in (('max_number_of_messages', 'MaxNumberOfMessages'),
+                  ('visibility_timeout', 'VisibilityTimeout'),
+                  ('wait_time_seconds', 'WaitTimeSeconds')):
+        k = 'sqs.' + k
         if k in settings and len(settings[k]) > 0:
-            params[k] = int(settings[k])
-    for k in ('profile', 'credentials_file', 'config_file', 'provider',
-              'region', 'data_path'):
-        if k in settings and len(settings[k]) > 0:
-            params[k] = settings[k]
+            params[kk] = int(settings[k])
+    params['receive_params'] = receive_params
     worker = Worker(**params)
     worker.serve_forever()
     return 0

@@ -9,9 +9,9 @@ logger = logging.getLogger(__name__)
 
 
 @task('value')
-def test(message):
-    logger.info('Dispatched: %r', message)
-    return message.get('return', False)
+def test(data):
+    logger.info('Dispatched: %r', data)
+    return data.get('return', False)
 
 
 def main(global_config, **settings):

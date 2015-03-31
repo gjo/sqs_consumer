@@ -17,6 +17,7 @@ except:
 
 requires = (
     'botocore',
+    'botocore_paste',
     'pyramid',
     'venusian',
 )

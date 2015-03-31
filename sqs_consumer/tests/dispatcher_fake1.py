@@ -5,5 +5,5 @@ from ..dispatchers import task
 
 
 @task('value')
-def test(message):
-    return message
+def test(data):
+    return data
