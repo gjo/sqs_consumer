@@ -2,4 +2,4 @@
 
 __version__ = '0.1.dev0'
 
-from .dispatchers import Dispatcher, JsonObjectDispatcher, task
+from .dispatchers import JsonObjectDispatcher, task

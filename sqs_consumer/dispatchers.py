@@ -4,6 +4,8 @@ import logging
 import json
 import venusian
 from pyramid.path import caller_package
+from zope.interface import implementer
+from .interfaces import IApplication
 
 
 logger = logging.getLogger(__name__)
@@ -37,6 +39,7 @@ class Dispatcher(object):
         self.scanner.scan(package)
 
 
+@implementer(IApplication)
 class JsonObjectDispatcher(Dispatcher):
 
     key = None
