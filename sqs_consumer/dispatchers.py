@@ -30,7 +30,7 @@ class Dispatcher(object):
         self.registry = Registry()
         self.scanner = venusian.Scanner(registry=self.registry)
 
-    def __call__(self, data):
+    def __call__(self, data):  # pragma: nocover
         raise NotImplementedError
 
     def scan(self, package=None):
@@ -45,10 +45,17 @@ class JsonObjectDispatcher(Dispatcher):
     key = None
 
     def __init__(self, key):
+        """
+        :type key: str
+        """
         super(JsonObjectDispatcher, self).__init__()
         self.key = key
 
     def __call__(self, data):
+        """
+        :type data:
+        :return:
+        """
         try:
             decoded = json.loads(data)
         except ValueError:
@@ -63,8 +70,19 @@ class JsonObjectDispatcher(Dispatcher):
 
 
 def task(value):
+    """
+    :type value: str
+    """
     def wrapper(wrapping):
+        """
+        :type wrapping: (dict) => bool
+        """
         def callback(scanner, name, ob):
+            """
+            :type scanner: Dispatcher
+            :type name: str
+            :type ob: object
+            """
             scanner.registry.add(value, wrapping)
         venusian.attach(wrapping, callback)
         return wrapping

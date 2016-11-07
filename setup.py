@@ -15,12 +15,16 @@ except:
     long_description = description
 
 
-requires = (
+install_requires = [
     'botocore',
-    'botocore_paste',
     'pyramid',
     'venusian',
-)
+    'zope.interface',
+]
+
+tests_require = [
+    'mock',
+]
 
 setup(
     name='sqs_consumer',
@@ -34,17 +38,24 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
-    install_requires=requires,
+    install_requires=install_requires,
     test_suite='sqs_consumer',
+    tests_require=tests_require,
+    extras_require={
+        'testing': tests_require,
+    },
+    entry_points={
+        # 'console_scripts': [],
+        'paste.app_factory': [
+            'example = sqs_consumer.testing:example_app_factory',
+        ],
+        'paste.server_runner': [
+            'server_runner = sqs_consumer:server_runner',
+        ],
+    },
     classifiers=[
         'License :: OSI Approved :: BSD License',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3.4',
     ],
-    entry_points="""\
-    [paste.app_factory]
-    example = sqs_consumer.tests.example:main
-    [paste.server_runner]
-    runworker = sqs_consumer.workers:run_pserve
-    """,
 )
