@@ -4,7 +4,7 @@ import logging
 import signal
 from pyramid.path import DottedNameResolver
 from zope.interface.verify import verifyObject
-from .interfaces import ITransport, IWorker
+from .interfaces import IApplication, ITransport, IWorker
 
 
 logger = logging.getLogger(__name__)
@@ -14,7 +14,7 @@ class Orbiter(object):
 
     def __init__(self, app, transport, worker):
         """
-        :type app: sqs_consumer.interfaces.IApplication
+        :type app: IApplication
         :type transport: ITransport
         :type worker: IWorker
         """
@@ -41,10 +41,12 @@ class Orbiter(object):
 
 def factory(app, config):
     """
-    :type app: sqs_consumer.interfaces.IApplication
+    :type app: IApplication
     :type config: dict
     :return: Orbiter
     """
+    verifyObject(IApplication, app)
+
     resolver = DottedNameResolver(package=None)
 
     transport_factory = resolver.resolve(config['transport_factory'])

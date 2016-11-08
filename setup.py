@@ -46,9 +46,6 @@ setup(
     },
     entry_points={
         # 'console_scripts': [],
-        'paste.app_factory': [
-            'example = sqs_consumer.testing:example_app_factory',
-        ],
         'paste.server_runner': [
             'server_runner = sqs_consumer:server_runner',
         ],

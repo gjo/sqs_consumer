@@ -71,15 +71,3 @@ def worker_mock_factory(app, config, prefix='worker.mock.'):
     """
     worker = IWorkerMock()
     return worker
-
-
-def example_app_factory(global_config, **settings):  # pragma: nocover
-    from .dispatchers import JsonObjectDispatcher
-    app = JsonObjectDispatcher(key='key')
-
-    def example_task(data):
-        logger.info('Dispatched: %r', data)
-        return data.get('return', False)
-
-    app.registry.add('value', example_task)
-    return app

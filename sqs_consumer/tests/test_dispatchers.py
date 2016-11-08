@@ -1,29 +1,24 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import unicode_literals
 import unittest
+from zope.interface.verify import verifyClass, verifyObject
 
 
-class DispatcherTestCase(unittest.TestCase):
-    pass
+class DictDispatchTestCase(unittest.TestCase):
 
+    def test_interface(self):
+        from ..applications import DictDispatch
+        from ..interfaces import IApplication
+        verifyClass(IApplication, DictDispatch)
+        obj = DictDispatch('__testing_key__')
+        verifyObject(IApplication, obj)
 
-class JsonObjectDispatcherTestCase(unittest.TestCase):
+    def test_impl(self):
+        from ..interfaces import IApplication
+        from . import fake_app1
 
-    def test_found(self):
-        from ..dispatchers import JsonObjectDispatcher
-        from . import dispatcher_fake1
+        app = fake_app1.main({})
+        verifyObject(IApplication, app)
 
-        target = JsonObjectDispatcher('key')
-        target.scan(dispatcher_fake1)
-        message = r'{"key":"value"}'
-        self.assertDictEqual(target(message), {"key": "value"})
-
-    def test_notfound(self):
-        from ..dispatchers import JsonObjectDispatcher, CannotDispatch
-        from . import dispatcher_fake1
-
-        target = JsonObjectDispatcher('key')
-        target.scan(dispatcher_fake1)
-        message = r'{"key":"BLAH"}'
-        self.assertRaises(CannotDispatch, target, message)
+        message = r'{"key":"value","return_value":1}'
+        self.assertTrue(app(message))
