@@ -31,7 +31,7 @@ class BotoCoreMessage(object):
     receipt_handle = property(lambda self: self.data['ReceiptHandle'])
 
     def delete(self):
-        self.transport.delete_message(self.data)
+        self.transport.delete_message(self)
 
 
 @implementer(ITransport)

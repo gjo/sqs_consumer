@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from . import interfaces, orbiter, transports, workers
+from . import applications, interfaces, orbiter, transports, workers
 
 
 __version__ = '0.1'
