@@ -11,12 +11,12 @@ logger = logging.getLogger(__name__)
 
 
 @implementer(IMessage)
-class SQSMessage(object):
+class BotoCoreMessage(object):
 
     def __init__(self, transport, data):
         """
-        :type transport: SQSTransport
-        :type data: dict[str, bytes]
+        :type transport: BotoCoreTransport
+        :type data: dict[bytes, bytes]
         """
         self.transport = transport
         self.data = data
@@ -27,12 +27,15 @@ class SQSMessage(object):
     # :type: bytes
     body = property(lambda self: self.data['Body'])
 
+    # :type: bytes
+    receipt_handle = property(lambda self: self.data['ReceiptHandle'])
+
     def delete(self):
         self.transport.delete_message(self.data)
 
 
 @implementer(ITransport)
-class SQSTransport(object):
+class BotoCoreTransport(object):
 
     def __init__(self, queue_name, client, receive_params):
         """
@@ -47,13 +50,13 @@ class SQSTransport(object):
 
     def __call__(self):
         """
-        :rtype: collections.Iterable[SQSMessage]
+        :rtype: collections.Iterable[BotoCoreMessage]
         """
         ret = self.receive_message()
         if 'Messages' in ret:
             logger.info('Polled: %d messages', len(ret['Messages']))
             for m in ret['Messages']:
-                yield SQSMessage(self, m)
+                yield BotoCoreMessage(self, m)
         else:
             logger.info('Polled: no messages')
 
@@ -80,30 +83,30 @@ class SQSTransport(object):
 
     def delete_message(self, message):
         """
-        :type message: SQSMessage
+        :type message: BotoCoreMessage
         :rtype: dict
         """
         params = dict(QueueUrl=self.queue_url,
-                      ReceiptHandle=message['ReceiptHandle'])
+                      ReceiptHandle=message.receipt_handle)
         logger.debug('[PROTO] DeleteMessage Call: %r', params)
         ret = self.client.delete_message(**params)
         logger.debug('[PROTO] DeleteMessage Return: %r', ret)
         return ret
 
 
-def sqs_factory(settings, prefix='transport.sqs.'):
+def botocore_factory(settings, prefix='transport.botocore.'):
     """
     :type settings: dict
     :type prefix: str
-    :rtype: SQSTransport
+    :rtype: BotoCoreTransport
     """
     st = dict([(k[len(prefix):], v) for k, v in settings.items()
                if k.startswith(prefix)])
 
     queue_name = st['queue_name']
 
-    sv = dict([(k[len('botocore.'):], v) for k, v in st.items()
-               if k.startswith('botocore.')])
+    sv = dict([(k[len('session_vars.'):], v) for k, v in st.items()
+               if k.startswith('session_vars.')])
     session = botocore.session.Session(session_vars=sv)
     client = session.create_client('sqs')
 
@@ -112,4 +115,4 @@ def sqs_factory(settings, prefix='transport.sqs.'):
         'VisibilityTimeout': int(st['visibility_timeout']),
         'WaitTimeSeconds': int(st['wait_time_seconds']),
     }
-    return SQSTransport(queue_name, client, receive_params)
+    return BotoCoreTransport(queue_name, client, receive_params)

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import unittest
+import mock
 from zope.interface.verify import verifyClass, verifyObject
 
 
@@ -13,38 +14,19 @@ class SyncWorkerTestCase(unittest.TestCase):
         verifyClass(IWorker, SyncWorker)
         verifyObject(IWorker, SyncWorker(IApplicationMock()))
 
-    def test_invoke_true(self):
+    def test_invoke(self):
         from ..testing import IApplicationMock, IMessageMock
         from ..workers import sync_factory
         app = IApplicationMock()
-        msg = IMessageMock()
+        app.side_effect = [True, False, Exception]
         obj = sync_factory(app, {})
-
-        app.return_value = True
-        obj.invoke(msg)
-        app.assert_called_once_with(msg.body)
-        msg.delete.assert_called_once_with()
-
-    def test_invoke_false(self):
-        from ..testing import IApplicationMock, IMessageMock
-        from ..workers import sync_factory
-        app = IApplicationMock()
-        msg = IMessageMock()
-        obj = sync_factory(app, {})
-
-        app.return_value = False
-        obj.invoke(msg)
-        app.assert_called_once_with(msg.body)
-        msg.delete.assert_not_called()
-
-    def test_invoke_raise(self):
-        from ..testing import IApplicationMock, IMessageMock
-        from ..workers import sync_factory
-        app = IApplicationMock()
-        msg = IMessageMock()
-        obj = sync_factory(app, {})
-
-        app.side_effect = Exception
-        obj.invoke(msg)
-        app.assert_called_once_with(msg.body)
-        msg.delete.assert_not_called()
+        msgs = [IMessageMock(), IMessageMock(), IMessageMock()]
+        obj.invoke(msgs)
+        app.assert_has_calls([
+            mock.call(msgs[0].body),
+            mock.call(msgs[1].body),
+            mock.call(msgs[2].body),
+        ])
+        msgs[0].delete.assert_called_once_with()
+        msgs[1].delete.assert_not_called()
+        msgs[2].delete.assert_not_called()

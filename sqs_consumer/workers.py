@@ -17,18 +17,19 @@ class SyncWorker(object):
         """
         self.app = app
 
-    def invoke(self, message):
+    def invoke(self, messages):
         """
-        :type message: sqs_consumer.interfaces.IMessage
+        :type messages: collections.Iterable[sqs_consumer.interfaces.IMessage]
         """
-        logger.info('Process Message: %s', message.id)
-        ret = None
-        try:
-            ret = self.app(message.body)
-        except:
-            logger.exception('Application Halted: %r', message)
-        if ret:
-            message.delete()
+        for message in messages:
+            logger.info('Process Message: %s', message.id)
+            ret = None
+            try:
+                ret = self.app(message.body)
+            except:
+                logger.exception('Application Halted: %r', message)
+            if ret:
+                message.delete()
 
 
 def sync_factory(app, settings, prefix='worker.sync.'):

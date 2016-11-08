@@ -21,6 +21,9 @@ class IMessage(Interface):
     # :type: bytes
     body = Attribute('Message Body')
 
+    # :type: bytes
+    receipt_handle = Attribute('Message Receipt Handle')
+
     def delete():
         """
         Delete this message from queue.
@@ -35,7 +38,7 @@ class ITransport(Interface):
 
 
 class IWorker(Interface):
-    def invoke(message):
+    def invoke(messages):
         """
-        :type data: IMessage
+        :type messages: collections.Iterable[IMessage]
         """

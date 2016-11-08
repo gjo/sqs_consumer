@@ -12,6 +12,6 @@ class ServerRunnerTestCase(unittest.TestCase):
         from ..testing import IApplicationMock
         app = IApplicationMock()
         server_runner(app, {
-            'transport_factory': 'sqs_consumer.testing.mock_transport_factory',
-            'worker_factory': 'sqs_consumer.testing.mock_worker_factory',
+            'transport_factory': 'sqs_consumer.testing.transport_mock_factory',
+            'worker_factory': 'sqs_consumer.testing.worker_mock_factory',
         })

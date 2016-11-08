@@ -19,8 +19,8 @@ def _iface_mock(iface):
     def init(self, *args, **kwargs):
         Mock.__init__(self, spec=list(iface.names()), *args, **kwargs)
 
-    name = iface.__name__ + "Mock"
-    cls = type(name, (Mock,), {"__init__": init})
+    name = iface.__name__ + 'Mock'
+    cls = type(name, (Mock,), {'__init__': init})
     classImplements(cls, iface)
     # globals()[name] = cls
     return cls  # for IDE support
@@ -33,6 +33,9 @@ IWorkerMock = _iface_mock(IWorker)
 
 
 def dummy_sqs_message():
+    """
+    :rtype: dict[bytes, bytes]
+    """
     return {
         'MessageId': '__dummy_id__',
         'Body': '__dummy_body__',
@@ -49,12 +52,23 @@ def sqs_client_mock():
     return client
 
 
-def mock_transport_factory(config, prefix='transport.mock.'):
+def transport_mock_factory(config, prefix='transport.mock.'):
+    """
+    :type config: dict
+    :type prefix: str
+    :rtype: ITransport
+    """
     transport = ITransportMock()
     return transport
 
 
-def mock_worker_factory(app, config, prefix='worker.mock.'):
+def worker_mock_factory(app, config, prefix='worker.mock.'):
+    """
+    :type app: callable
+    :type config: dict
+    :type prefix: str
+    :rtype: IWorker
+    """
     worker = IWorkerMock()
     return worker
 

@@ -36,13 +36,12 @@ class Orbiter(object):
             self.serve_oneshot()
 
     def serve_oneshot(self):
-        for m in self.transport():
-            self.worker.invoke(m)
+        self.worker.invoke(self.transport())
 
 
 def factory(app, config):
     """
-    :type app: callable
+    :type app: sqs_consumer.interfaces.IApplication
     :type config: dict
     :return: Orbiter
     """

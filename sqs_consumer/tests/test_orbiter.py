@@ -47,11 +47,9 @@ class OrbiterTestCase(unittest.TestCase):
         transport = ITransportMock()
         worker = IWorkerMock()
         obj = Orbiter(app, transport, worker)
-        marker = object()
-        transport.return_value = [marker]
         obj.serve_oneshot()
         transport.assert_called_once_with()
-        worker.invoke.assert_called_once_with(marker)
+        worker.invoke.assert_called_once_with(transport.return_value)
 
 
 class FactoryTestCase(unittest.TestCase):
@@ -61,7 +59,7 @@ class FactoryTestCase(unittest.TestCase):
         from ..testing import IApplicationMock
         app = IApplicationMock()
         ret = factory(app, {
-            'transport_factory': 'sqs_consumer.testing.mock_transport_factory',
-            'worker_factory': 'sqs_consumer.testing.mock_worker_factory',
+            'transport_factory': 'sqs_consumer.testing.transport_mock_factory',
+            'worker_factory': 'sqs_consumer.testing.worker_mock_factory',
         })
         self.assertIs(ret.app, app)
