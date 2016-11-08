@@ -6,13 +6,13 @@ from . import interfaces, orbiter, transports, workers
 __version__ = '0.1'
 default_config = {
     'transport_factory': 'sqs_consumer.transports.botocore_factory',
-    'transport.botocore.max_number_of_messages': '100',
+    'transport.botocore.max_number_of_messages': '1',
     # 'transport.botocore.queue_name': '',
     # 'transport.botocore.session_vars.profile': '',
     # 'transport.botocore.session_vars.config_file': '',
     # 'transport.botocore.session_vars.credentials_file': '',
-    'transport.botocore.visibility_timeout': '3600',
-    'transport.botocore.wait_time_seconds': '120',
+    'transport.botocore.visibility_timeout': '0',
+    'transport.botocore.wait_time_seconds': '20',
     'worker_factory': 'sqs_consumer.workers.sync_factory',
 }
 
